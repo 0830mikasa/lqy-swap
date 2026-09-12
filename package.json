@@ -1,0 +1,28 @@
+{
+  "name": "lqy-swap",
+  "version": "1.0.0",
+  "description": "LQYSwap —— LQY ⇄ ETH 自动做市池（x*y=k AMM，Uniswap 思路最简版）",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "demo": "hardhat run scripts/demo-local.ts",
+    "deploy": "cross-env NODE_OPTIONS=--dns-result-order=ipv4first hardhat run scripts/deploy.ts --network sepolia",
+    "interact": "cross-env NODE_OPTIONS=--dns-result-order=ipv4first hardhat run scripts/interact.ts --network sepolia",
+    "verify": "cross-env NODE_OPTIONS=--dns-result-order=ipv4first hardhat verify --network sepolia"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^4.0.15",
+    "@nomicfoundation/hardhat-verify": "^3.1.0",
+    "@types/node": "^22.20.2",
+    "cross-env": "^10.1.0",
+    "ethers": "^6.17.0",
+    "hardhat": "^3.16.0",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.3.0",
+    "dotenv": "^17.4.2"
+  }
+}

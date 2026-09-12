@@ -1,0 +1,21 @@
+# Node modules
+/node_modules
+
+# Compilation output
+/dist
+
+# Hardhat Build Artifacts
+/artifacts
+
+# Hardhat compilation (v2) support directory
+/cache
+
+# Environment files —— 铁律：.env 永远不能提交
+.env
+.env.*
+!.env.example
+
+# Coverage / gas snapshots
+/coverage
+/.gas-snapshot
+/snapshots

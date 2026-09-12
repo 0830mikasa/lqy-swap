@@ -1,0 +1,43 @@
+# ============================================================
+# 文件：.github/workflows/deploy.yml
+# 作用：每次推送到 GitHub 的 main 分支时，自动把 frontend/ 文件夹
+#       发布成网页（GitHub Pages）。
+#       【固定】本文件原样复制到新项目即可，不用改。
+#       注意：每个新仓库都要手动开一次开关——
+#             Settings → Pages → Source 选 "GitHub Actions"
+# ============================================================
+name: Deploy frontend to GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+  # 也可以在 Actions 页面手动触发
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

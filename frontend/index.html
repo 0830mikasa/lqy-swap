@@ -204,6 +204,20 @@ button.copy:hover { background: rgba(139,92,246,.25); border-color: rgba(139,92,
 .ext { display: inline-block; margin-top: 14px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; color: #7dd3fc; text-decoration: none; }
 .ext:hover { text-decoration: underline; }
 
+/* 钓鱼挖矿 */
+.lake-wrap { position: relative; border-radius: 16px; overflow: hidden; margin-bottom: 18px;
+  border: 1px solid var(--line); background: #070714; }
+#fishingCanvas { display: block; width: 100%; height: 300px; cursor: pointer;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+@media (max-width: 640px) { #fishingCanvas { height: 230px; } }
+.lake-hud { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  pointer-events: none; font-family: var(--font-disp); font-size: 22px; letter-spacing: .1em;
+  color: #fff; text-shadow: 0 0 24px rgba(139,92,246,.8); opacity: 0; transition: opacity .2s; }
+.lake-hud.show { opacity: 1; }
+#fishBtn.bite { animation: pulse-btn .45s infinite alternate;
+  background: linear-gradient(135deg, #fb7185, #f59e0b 140%); }
+@keyframes pulse-btn { to { box-shadow: 0 0 30px rgba(251,113,133,.8); transform: scale(1.03); } }
+
 /* 动画减弱偏好 */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
@@ -360,6 +374,30 @@ button.copy:hover { background: rgba(139,92,246,.25); border-color: rgba(139,92,
           <div class="status" id="liqRemoveStatus"></div>
         </div>
       </section>
+
+      <!-- 钓鱼挖矿 -->
+      <section class="card reveal" style="--d:.5s">
+        <div class="card-label">Fishing <span>钓鱼挖矿</span></div>
+        <div class="lake-wrap">
+          <canvas id="fishingCanvas" aria-label="钓鱼小游戏画布"></canvas>
+          <div class="lake-hud" id="lakeHud"></div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat"><div class="k">鱼池余额 POND</div><div class="v" id="pondBal">…</div></div>
+          <div class="stat"><div class="k">每次奖励 REWARD</div><div class="v" id="fishReward">…</div></div>
+          <div class="stat"><div class="k">冷却规则 COOLDOWN</div><div class="v" id="fishCooldownRule">…</div></div>
+          <div class="stat"><div class="k">我的累计 MY CATCH</div><div class="v" id="myFished">…</div></div>
+        </div>
+        <div class="quote">
+          <span class="q-label">下次可钓</span>
+          <span class="q-value" id="myCooldown">—</span>
+        </div>
+        <div class="hint" id="fishHint">链上合约看不见你的「手感」——动画只是前端皮肤，合约只守发放规则：每 5 分钟一次、每次 10 LQY。</div>
+        <div class="actions">
+          <button id="fishBtn" class="btn-main">甩竿</button>
+        </div>
+        <div class="status" id="fishStatus"></div>
+      </section>
     </main>
 
     <footer class="foot reveal" style="--d:.55s">
@@ -373,7 +411,13 @@ button.copy:hover { background: rgba(139,92,246,.25); border-color: rgba(139,92,
         <code id="lqyAddr"></code>
         <button id="copyLqyBtn" class="copy">复制</button>
       </div>
+      <div class="foot-label">FISHING CONTRACT <span>钓鱼合约</span></div>
+      <div class="addr-row">
+        <code id="fishingAddr"></code>
+        <button id="copyFishingBtn" class="copy">复制</button>
+      </div>
       <a id="explorerLink" class="ext" href="#" target="_blank" rel="noopener">在 Etherscan 查看合约 ↗</a>
+      <a id="fishingExplorerLink" class="ext" href="#" target="_blank" rel="noopener">在 Etherscan 查看钓鱼合约 ↗</a>
     </footer>
   </div>
 
@@ -432,6 +476,24 @@ const LQY_ABI = [
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }] }
 ];
 
+// ③ 钓鱼合约（阶段 3）：部署后回填地址，ABI 只放用到的函数
+const FISHING_ADDRESS = "0xF0f93a10995b81E76eB71aefbD161F9186d9ccf6";
+const FISHING_ABI = [
+  { "type": "function", "name": "fish", "stateMutability": "nonpayable", "inputs": [], "outputs": [] },
+  { "type": "function", "name": "cooldown", "stateMutability": "view",
+    "inputs": [], "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }] },
+  { "type": "function", "name": "rewardPerFish", "stateMutability": "view",
+    "inputs": [], "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }] },
+  { "type": "function", "name": "pondBalance", "stateMutability": "view",
+    "inputs": [], "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }] },
+  { "type": "function", "name": "totalFished", "stateMutability": "view",
+    "inputs": [{ "internalType": "address", "name": "player", "type": "address" }],
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }] },
+  { "type": "function", "name": "remainingCooldown", "stateMutability": "view",
+    "inputs": [{ "internalType": "address", "name": "player", "type": "address" }],
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }] }
+];
+
 // ================== 【固定，不用改】以下部分直接复用 ==================
 // 公共 RPC 节点（谁都能用）。绝不要放 Alchemy 带 key 的地址！
 const RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
@@ -444,11 +506,14 @@ const $ = (id) => document.getElementById(id);
 let provider = new ethers.JsonRpcProvider(RPC_URL);
 let swapRO = new ethers.Contract(SWAP_ADDRESS, SWAP_ABI, provider);
 let lqyRO  = new ethers.Contract(LQY_ADDRESS, LQY_ABI, provider);
+let fishingRO = new ethers.Contract(FISHING_ADDRESS, FISHING_ABI, provider);
 let account = null;        // 已连接的钱包地址
 let signer = null;         // 可发交易的 signer
 let swapDir = "eth2tok";   // 当前兑换方向
 let liqTab = "add";        // 流动性当前标签页
 let rEth = 0n, rTok = 0n;  // 池子储备（大整数）
+let fishPond = 0n, fishReward = 0n, fishCooldown = 0n; // 钓鱼链上状态（大整数）
+let fishCooldownLeft = 0;  // 剩余冷却秒数（本地显示用，链上每 20 秒校准）
 
 // —— 数字格式化：wei → 可读 ——
 function fmt(wei, decimals = 18, maxFrac = 6) {
@@ -492,6 +557,7 @@ async function refreshPool() {
     updateSwapQuote();
     updateLiqHint();
     updateRemovePreview();
+    await refreshFishing();
   } catch (e) {
     $("kVal").textContent = "读取失败：" + (e.shortMessage || e.message);
   }
@@ -562,6 +628,7 @@ async function connectWallet(statusEl, beforeText) {
     signer = await browserProvider.getSigner();
     account = await signer.getAddress();
     await refreshWallet();
+    await refreshFishing();
     return true;
   } catch (e) {
     setStatus(statusEl, "连接钱包失败：" + (e.shortMessage || e.message), "err");
@@ -855,6 +922,166 @@ function bindCopy(btn, addr) {
 }
 bindCopy($("copyBtn"), SWAP_ADDRESS);
 bindCopy($("copyLqyBtn"), LQY_ADDRESS);
+$("fishingAddr").textContent = FISHING_ADDRESS;
+$("fishingExplorerLink").href = ETHERSCAN + "/address/" + FISHING_ADDRESS;
+bindCopy($("copyFishingBtn"), FISHING_ADDRESS);
+
+// ================== 钓鱼挖矿 ==================
+// 玩法状态机：idle → casting → waiting → bite → reeling → settling → idle
+// （bite 超时 2 秒没拉竿 → 直接回 idle，鱼跑了，链上无交易）
+const F = { state: "idle", biteAt: 0, biteDeadline: 0 };
+
+function fmtCountdown(sec) {
+  const s = Number(sec), m = Math.floor(s / 60), r = s % 60;
+  return (m > 0 ? m + " 分 " : "") + r + " 秒";
+}
+function lakeHudShow(text) {
+  const hud = $("lakeHud");
+  hud.textContent = text;
+  hud.classList.add("show");
+}
+function lakeHudHide() { $("lakeHud").classList.remove("show"); }
+
+// 刷新钓鱼卡片：读 4 个 view（免费调用，无需钱包）
+async function refreshFishing() {
+  if (FISHING_ADDRESS === "0x0000000000000000000000000000000000000000") {
+    $("fishHint").textContent = "尚未配置钓鱼合约地址，部署后把地址回填到 FISHING_ADDRESS。";
+    return;
+  }
+  try {
+    const [pond, reward, cd, rem] = await Promise.all([
+      fishingRO.pondBalance(), fishingRO.rewardPerFish(), fishingRO.cooldown(),
+      account ? fishingRO.remainingCooldown(account) : Promise.resolve(0n),
+    ]);
+    fishPond = pond; fishReward = reward; fishCooldown = cd;
+    $("pondBal").innerHTML = fmt(pond) + " <small>LQY</small>";
+    $("fishReward").innerHTML = fmt(reward) + " <small>LQY</small>";
+    $("fishCooldownRule").textContent = (Number(cd) / 60) + " 分钟 / 次";
+    if (account) {
+      $("myFished").innerHTML = fmt(await fishingRO.totalFished(account), 18, 0) + " <small>条</small>";
+      fishCooldownLeft = Number(rem);
+      $("myCooldown").textContent = rem > 0n ? fmtCountdown(rem) : "现在可钓";
+    } else {
+      $("myFished").innerHTML = "— <small>未连接</small>";
+      $("myCooldown").textContent = "连接钱包后显示";
+    }
+    updateFishBtn();
+  } catch (e) {
+    $("fishHint").textContent = "读取失败：" + (e.shortMessage || e.message);
+  }
+}
+
+// 按钮文案矩阵（按状态与链上数据综合决定）
+function updateFishBtn() {
+  const btn = $("fishBtn");
+  btn.classList.remove("bite");
+  if (FISHING_ADDRESS === "0x0000000000000000000000000000000000000000") {
+    btn.disabled = true; btn.textContent = "等待部署"; return;
+  }
+  if (F.state === "casting" || F.state === "waiting") {
+    btn.disabled = true; btn.textContent = "等待鱼上钩…"; return;
+  }
+  if (F.state === "bite") {
+    btn.disabled = false; btn.textContent = "快拉竿！（2 秒内）"; btn.classList.add("bite"); return;
+  }
+  if (F.state === "reeling" || F.state === "settling") {
+    btn.disabled = true; btn.textContent = F.state === "settling" ? "上链中…" : "收线…"; return;
+  }
+  if (!account) { btn.disabled = false; btn.textContent = "连接钱包后甩竿"; return; }
+  if (fishCooldownLeft > 0) { btn.disabled = true; btn.textContent = "冷却中 " + fmtCountdown(fishCooldownLeft); return; }
+  if (fishPond < fishReward) { btn.disabled = true; btn.textContent = "鱼池已空，等老板投喂"; return; }
+  btn.disabled = false; btn.textContent = "甩竿";
+}
+
+// 甩竿：连接钱包 + 前端预检（链上仍是最终裁判）
+async function cast() {
+  const statusEl = $("fishStatus");
+  if (!(await connectWallet(statusEl, "正在连接钱包…"))) return;
+  if (fishCooldownLeft > 0) { setStatus(statusEl, "冷却还没结束，看上面的倒计时。", "err"); return; }
+  if (fishPond < fishReward) { setStatus(statusEl, "鱼池已空，等待老板投喂。", "err"); return; }
+  F.state = "casting";
+  lakeHudShow("抛竿…");
+  updateFishBtn();
+  setTimeout(() => {
+    F.state = "waiting";
+    F.biteAt = Date.now() + 3000 + Math.random() * 5000; // 3~8 秒随机上钩
+    updateFishBtn();
+  }, 700);
+}
+
+// 拉竿：只在 bite 态有效（2 秒窗口）
+function reel() {
+  if (F.state !== "bite") return;
+  F.state = "reeling";
+  lakeHudShow("上钩！");
+  updateFishBtn();
+  setTimeout(() => settleOnChain(), 400);
+}
+
+// 上链：成功动画之后发 fish() 交易（五段式，镜像 swapBtn）
+async function settleOnChain() {
+  const statusEl = $("fishStatus");
+  F.state = "settling";
+  updateFishBtn();
+  try {
+    // 链上再校验：前端状态可能过期（别的设备钓过、鱼池刚被钓空）
+    if ((await fishingRO.remainingCooldown(account)) > 0n) {
+      setStatus(statusEl, "链上冷却还没结束（可能别的设备钓过了），以链上为准。", "err");
+      return;
+    }
+    if ((await fishingRO.pondBalance()) < (await fishingRO.rewardPerFish())) {
+      setStatus(statusEl, "鱼池已空，等待老板投喂。", "err");
+      return;
+    }
+    $("fishBtn").disabled = true;
+    const fishingWrite = new ethers.Contract(FISHING_ADDRESS, FISHING_ABI, signer);
+    setStatus(statusEl, "请在 MetaMask 确认钓鱼…");
+    const tx = await fishingWrite.fish();
+    setStatus(statusEl, "交易已广播，等待打包上链… " + txLink(tx.hash));
+    await tx.wait();
+    setStatus(statusEl, "上钩！+" + fmt(fishReward) + " LQY 已到账。<br>" + txLink(tx.hash), "ok");
+    await refreshFishing();
+  } catch (e) {
+    const reason = e.shortMessage || e.message || String(e);
+    if (reason.includes("user rejected") || e.code === 4001) {
+      setStatus(statusEl, "你在 MetaMask 里取消了交易。", "err");
+    } else if (reason.includes("too soon")) {
+      setStatus(statusEl, "链上冷却未结束，以链上为准。", "err");
+    } else if (reason.includes("empty pond")) {
+      setStatus(statusEl, "鱼池已空，等待老板投喂。", "err");
+    } else {
+      setStatus(statusEl, "出错了：" + reason, "err");
+    }
+  } finally {
+    F.state = "idle";
+    updateFishBtn();
+  }
+}
+
+// 画布与按钮交互：idle 点一下 = 甩竿；bite 点一下 = 拉竿（鼠标 + 触屏统一）
+$("fishingCanvas").addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  if (F.state === "idle") cast();
+  else if (F.state === "bite") reel();
+});
+$("fishingCanvas").addEventListener("touchstart", (e) => { e.preventDefault(); }, { passive: false });
+document.addEventListener("keydown", (e) => {
+  if (e.code === "Space" && F.state === "bite") { e.preventDefault(); reel(); }
+});
+$("fishBtn").addEventListener("click", () => {
+  if (F.state === "idle") cast();
+  else if (F.state === "bite") reel();
+});
+
+// 倒计时：本地每秒递减仅供显示；每 20 秒向链上校准一次（一切以链上为准）
+setInterval(() => {
+  if (!account || fishCooldownLeft <= 0) return;
+  fishCooldownLeft--;
+  $("myCooldown").textContent = fmtCountdown(fishCooldownLeft);
+  updateFishBtn();
+  if (fishCooldownLeft === 0) refreshFishing();
+}, 1000);
+setInterval(() => { if (account) refreshFishing(); }, 20000);
 
 // ================== 动态图画 ==================
 // ① 星空粒子网络：游动的光点 + 近距离连线（区块链网络的隐喻）
@@ -916,7 +1143,200 @@ bindCopy($("copyLqyBtn"), LQY_ADDRESS);
   addEventListener("resize", () => { resize(); seed(); });
 })();
 
-// ② 鼠标视差：背景极光与纪念币微微随鼠标移动
+// ② 钓鱼场景：夜空、极光倒影、水面与鱼（纯前端动画，与链上规则无关）
+(function () {
+  const cvs = $("fishingCanvas");
+  const ctx = cvs.getContext("2d");
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let W = 0, H = 0; // CSS 像素
+  const dpr = () => devicePixelRatio || 1;
+
+  function resize() {
+    W = cvs.clientWidth; H = cvs.clientHeight;
+    cvs.width = Math.round(W * dpr()); cvs.height = Math.round(H * dpr());
+    ctx.setTransform(dpr(), 0, 0, dpr(), 0, 0);
+  }
+
+  // 场景元素（纯前端状态，链上一个都不认识）
+  const S = {
+    t: 0,                 // 全局时间（波浪相位）
+    lineT: 1,             // 鱼线抛出进度 0→1（1 = 正常挂着）
+    floatY: 0.58,         // 浮漂相对高度（bite 时下沉）
+    fishes: [],           // 水下鱼影 [{x,y,vx,s,c}]
+    ripples: [],          // 涟漪 [{x,y,r,a}]
+    particles: [],        // 水花星屑 [{x,y,vx,vy,life}]
+  };
+  function seedFishes() {
+    S.fishes = [
+      { x: 0.25, y: 0.8, vx: 0.0006, s: 1.2, c: "139,92,246" },
+      { x: 0.7,  y: 0.88, vx: -0.00045, s: 1.0, c: "34,211,238" },
+      { x: 0.55, y: 0.93, vx: 0.0005, s: 0.8, c: "79,124,255" },
+    ];
+  }
+  function floatX() { return W * 0.52; }                 // 浮漂横坐标
+  function floatY() { return H * S.floatY; }             // 浮漂纵坐标
+  function rippleAt(x, y) { S.ripples.push({ x, y, r: 3, a: 0.5 }); }
+  function splash(x, y) {
+    for (let i = 0; i < 10; i++) {
+      const ang = Math.random() * Math.PI * 2, sp = 0.5 + Math.random() * 1.8;
+      S.particles.push({ x, y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - 1, life: 30 + Math.random() * 20 });
+    }
+  }
+
+  // ── 绘制层 ──
+  function drawSky() {
+    const g = ctx.createLinearGradient(0, 0, 0, H * 0.7);
+    g.addColorStop(0, "#0b0b1e"); g.addColorStop(1, "#101031");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H * 0.7);
+    ctx.fillStyle = "rgba(255,255,255,.5)";
+    for (let i = 0; i < 14; i++) {
+      const sx = (i * 137.5) % W, sy = ((i * 89.3) % (H * 0.45));
+      ctx.globalAlpha = 0.2 + 0.5 * ((i * 13) % 7) / 7;
+      ctx.fillRect(sx, sy, 1.5, 1.5);
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawAurora() {
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    const bands = [
+      { y: 0.16, amp: 0.05, w: 0.003, c: "rgba(139,92,246,.20)" },
+      { y: 0.24, amp: 0.04, w: 0.002, c: "rgba(79,124,255,.16)" },
+      { y: 0.32, amp: 0.03, w: 0.0015, c: "rgba(34,211,238,.12)" },
+    ];
+    for (const b of bands) {
+      ctx.beginPath();
+      for (let x = 0; x <= W; x += 6) {
+        const y = H * b.y + Math.sin(x * b.w + S.t * 0.01) * H * b.amp +
+                  Math.sin(x * b.w * 0.6 - S.t * 0.007) * H * b.amp * 0.7;
+        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.lineTo(W, 0); ctx.lineTo(0, 0); ctx.closePath();
+      ctx.fillStyle = b.c; ctx.fill();
+    }
+    ctx.restore();
+  }
+  function drawMountains() {
+    ctx.beginPath();
+    ctx.moveTo(0, H * 0.7);
+    for (let x = 0; x <= W; x += 8) {
+      ctx.lineTo(x, H * 0.7 - Math.abs(Math.sin(x * 0.004)) * H * 0.12 - Math.sin(x * 0.013) * H * 0.03);
+    }
+    ctx.lineTo(W, H * 0.7); ctx.closePath();
+    ctx.fillStyle = "rgba(10,10,25,.9)"; ctx.fill();
+  }
+  function drawWater() {
+    const g = ctx.createLinearGradient(0, H * 0.7, 0, H);
+    g.addColorStop(0, "rgba(15,23,42,.95)"); g.addColorStop(1, "rgba(5,8,18,1)");
+    ctx.fillStyle = g; ctx.fillRect(0, H * 0.7, W, H * 0.3);
+    ctx.strokeStyle = "rgba(255,255,255,.06)"; ctx.lineWidth = 1;
+    for (let k = 0; k < 3; k++) {
+      ctx.beginPath();
+      for (let x = 0; x <= W; x += 5) {
+        const y = H * (0.74 + k * 0.07) + Math.sin(x * 0.012 + S.t * 0.02 + k * 2) * 2.5;
+        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+  }
+  function drawFishes() {
+    for (const f of S.fishes) {
+      f.x += f.vx;
+      if (f.x > 1.05) f.x = -0.05; if (f.x < -0.05) f.x = 1.05;
+      const x = f.x * W, y = f.y * H, len = 16 * f.s;
+      const dir = f.vx > 0 ? 1 : -1;
+      // 目标态（bite/reeling）鱼游向浮漂
+      let tx = x, ty = y;
+      if (F.state === "bite" || F.state === "reeling") {
+        const ddx = floatX() - x, ddy = floatY() - y;
+        const d = Math.hypot(ddx, ddy) || 1;
+        tx = x + ddx / d * 1.2; ty = y + ddy / d * 1.2;
+      }
+      ctx.save();
+      ctx.translate(tx, ty);
+      ctx.scale(dir, 1);
+      ctx.fillStyle = "rgba(" + f.c + ",.45)";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, len, len * 0.35, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(-len * 0.9, 0);
+      ctx.lineTo(-len * 1.5, -len * 0.45);
+      ctx.lineTo(-len * 1.5, len * 0.45);
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+  }
+  function drawBobber() {
+    const x = floatX(), y = floatY();
+    const bob = Math.sin(S.t * 0.06) * 1.5;
+    // 咬钩时浮漂剧烈抖动下沉
+    const shake = (F.state === "bite" || F.state === "reeling") ? Math.sin(S.t * 0.8) * 3 : 0;
+    const by = y + bob + shake + (F.state === "reeling" ? -8 : 0);
+    // 竿线：从浮漂到右下角（casting 时线从竿甩出）
+    const lineEnd = F.state === "casting" ? (1 - S.lineT) : 0;
+    ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(W * (0.52 + lineEnd * 0.4), by + 6);
+    ctx.lineTo(W * 0.92, H * 1.05);
+    ctx.stroke();
+    // 浮漂：白杆 + 发光红目
+    ctx.fillStyle = "rgba(255,255,255,.85)";
+    ctx.fillRect(x - 1, by - 10, 2, 10);
+    ctx.save();
+    ctx.shadowColor = "#fb7185"; ctx.shadowBlur = 8;
+    ctx.fillStyle = "#fb7185";
+    ctx.beginPath(); ctx.arc(x, by, 3.2, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    // 咬钩/收线时浮漂处泛涟漪
+    if (F.state === "bite" && S.t % 6 === 0) rippleAt(x, by + 4);
+    if (F.state === "reeling" && S.t % 3 === 0) rippleAt(x, by + 8);
+  }
+  function drawFx() {
+    for (const r of S.ripples) {
+      r.r += 0.8; r.a *= 0.94;
+      ctx.strokeStyle = "rgba(255,255,255," + r.a.toFixed(3) + ")";
+      ctx.beginPath(); ctx.ellipse(r.x, r.y, r.r, r.r * 0.3, 0, 0, Math.PI * 2); ctx.stroke();
+    }
+    S.ripples = S.ripples.filter((r) => r.a > 0.02);
+    for (const p of S.particles) {
+      p.x += p.vx; p.y += p.vy; p.vy += 0.08; p.life--;
+      ctx.fillStyle = "rgba(167,139,250," + (p.life / 50).toFixed(3) + ")";
+      ctx.fillRect(p.x, p.y, 2, 2);
+    }
+    S.particles = S.particles.filter((p) => p.life > 0);
+  }
+
+  function frame() {
+    ctx.clearRect(0, 0, W, H);
+    S.t++;
+    // 状态机推进（等待上钩 → 咬钩 2 秒窗口 → 超时逃脱）
+    if (F.state === "waiting" && Date.now() >= F.biteAt) {
+      F.state = "bite";
+      F.biteDeadline = Date.now() + 2000;
+      lakeHudShow("咬钩了！快拉竿！");
+      updateFishBtn();
+    } else if (F.state === "bite" && Date.now() > F.biteDeadline) {
+      F.state = "idle";
+      lakeHudShow("鱼跑了…");
+      setTimeout(lakeHudHide, 1200);
+      updateFishBtn();
+    }
+    // 鱼线动画：casting 抛出、reeling 收线
+    if (F.state === "casting") S.lineT = Math.min(1, S.lineT + 0.035);
+    else if (F.state === "reeling") { S.lineT = 1; if (S.t % 4 === 0) splash(floatX(), floatY()); }
+    // 咬钩时浮漂下沉，收线后归位
+    S.floatY = F.state === "bite" || F.state === "reeling" ? 0.63 : 0.58;
+
+    drawSky(); drawAurora(); drawMountains(); drawWater(); drawFishes(); drawBobber(); drawFx();
+    if (!reduce) requestAnimationFrame(frame);
+  }
+
+  resize(); seedFishes(); frame();
+  addEventListener("resize", resize);
+})();
+
+// ③ 鼠标视差：背景极光与纪念币微微随鼠标移动
 (function () {
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (reduce || matchMedia("(pointer: coarse)").matches) return;

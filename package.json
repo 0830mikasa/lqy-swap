@@ -10,7 +10,11 @@
     "demo": "hardhat run scripts/demo-local.ts",
     "deploy": "cross-env NODE_OPTIONS=--dns-result-order=ipv4first hardhat run scripts/deploy.ts --network sepolia",
     "interact": "cross-env NODE_OPTIONS=--dns-result-order=ipv4first hardhat run scripts/interact.ts --network sepolia",
-    "verify": "cross-env NODE_OPTIONS=--dns-result-order=ipv4first hardhat verify --network sepolia"
+    "verify": "cross-env NODE_OPTIONS=--dns-result-order=ipv4first hardhat verify --network sepolia",
+    "demo:fishing": "hardhat run scripts/demo-fishing.ts",
+    "deploy:fishing": "cross-env NODE_OPTIONS=--dns-result-order=ipv4first hardhat run scripts/deploy-fishing.ts --network sepolia",
+    "interact:fishing": "cross-env NODE_OPTIONS=--dns-result-order=ipv4first hardhat run scripts/interact-fishing.ts --network sepolia",
+    "fund:fishing": "cross-env NODE_OPTIONS=--dns-result-order=ipv4first hardhat run scripts/fund-fishing.ts --network sepolia"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "^4.0.15",

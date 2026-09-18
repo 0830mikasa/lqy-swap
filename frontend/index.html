@@ -438,6 +438,104 @@ button.copy:hover { background: rgba(139,92,246,.25); border-color: rgba(139,92,
         <div class="hint" id="stakeHint">质押 LQP 不影响池子运作（手续费照赚）。奖励按「你的份额 ÷ 总份额」每秒记账，只有动作时才一次性结清（惰性结算省 gas）。</div>
         <div class="status" id="stakeStatus"></div>
       </section>
+
+      <!-- 借贷（超额抵押：抵押 ETH 借 LQY，存款人吃利息） -->
+      <section class="card reveal" style="--d:.7s">
+        <div class="card-label">Lending <span>借贷</span></div>
+        <div class="stat-grid">
+          <div class="stat"><div class="k">池内现金 CASH</div><div class="v" id="lendCash">…</div></div>
+          <div class="stat"><div class="k">利用率 UTIL</div><div class="v" id="lendUtil">…</div></div>
+          <div class="stat"><div class="k">借款年化 BORROW APR</div><div class="v" id="lendBorrowApr">…</div></div>
+          <div class="stat"><div class="k">存款年化 SUPPLY APR</div><div class="v" id="lendSupplyApr">…</div></div>
+        </div>
+        <div class="quote">
+          <span class="q-label">我的仓位</span>
+          <span class="q-value" id="lendMyQuote">连接钱包后显示</span>
+        </div>
+        <label class="field">
+          <span class="field-name">存入 LQY（存款 = 股份，汇率随利息上涨）</span>
+          <div class="suffix-wrap">
+            <input id="lendSupplyIn" type="text" placeholder="0.0" inputmode="decimal" autocomplete="off" />
+            <span class="suffix">LQY</span>
+          </div>
+        </label>
+        <div class="actions">
+          <button id="lendSupplyBtn" class="btn-main">存入</button>
+          <button id="lendSupplyMaxBtn" class="ghost">全部</button>
+        </div>
+        <label class="field">
+          <span class="field-name">取出 LQY（存款价值 <span id="lendMyDepositLabel">0</span>，连本带息）</span>
+          <div class="suffix-wrap">
+            <input id="lendRedeemIn" type="text" placeholder="0.0" inputmode="decimal" autocomplete="off" />
+            <span class="suffix">LQY</span>
+          </div>
+        </label>
+        <div class="actions">
+          <button id="lendRedeemBtn" class="btn-main">取出</button>
+          <button id="lendRedeemMaxBtn" class="ghost">全部</button>
+        </div>
+        <label class="field">
+          <span class="field-name">抵押 ETH（借 LQY 的担保，最多可借抵押价值 × 75%）</span>
+          <div class="suffix-wrap">
+            <input id="lendCollIn" type="text" placeholder="0.0" inputmode="decimal" autocomplete="off" />
+            <span class="suffix">ETH</span>
+          </div>
+        </label>
+        <div class="actions">
+          <button id="lendCollBtn" class="btn-main">抵押</button>
+        </div>
+        <label class="field">
+          <span class="field-name">借 LQY（上限 <span id="lendBorrowMaxLabel">0</span> LQY，超 80% 抵押价值会被清算）</span>
+          <div class="suffix-wrap">
+            <input id="lendBorrowIn" type="text" placeholder="0.0" inputmode="decimal" autocomplete="off" />
+            <span class="suffix">LQY</span>
+          </div>
+        </label>
+        <div class="actions">
+          <button id="lendBorrowBtn" class="btn-main">借款</button>
+          <button id="lendBorrowMaxBtn" class="ghost">最大</button>
+        </div>
+        <label class="field">
+          <span class="field-name">还 LQY（当前债务 <span id="lendMyDebtLabel">0</span> LQY，每秒计息）</span>
+          <div class="suffix-wrap">
+            <input id="lendRepayIn" type="text" placeholder="0.0" inputmode="decimal" autocomplete="off" />
+            <span class="suffix">LQY</span>
+          </div>
+        </label>
+        <div class="actions">
+          <button id="lendRepayBtn" class="btn-main">还款</button>
+          <button id="lendRepayAllBtn" class="ghost">还清</button>
+        </div>
+        <label class="field">
+          <span class="field-name">取回抵押 ETH（已抵押 <span id="lendMyCollLabel">0</span>，取后须保持健康）</span>
+          <div class="suffix-wrap">
+            <input id="lendCollOut" type="text" placeholder="0.0" inputmode="decimal" autocomplete="off" />
+            <span class="suffix">ETH</span>
+          </div>
+        </label>
+        <div class="actions">
+          <button id="lendCollOutBtn" class="btn-main">取回</button>
+          <button id="lendCollOutMaxBtn" class="ghost">最大</button>
+        </div>
+        <label class="field">
+          <span class="field-name">清算对象（借款人地址）</span>
+          <div class="suffix-wrap">
+            <input id="lendLiqAddr" type="text" placeholder="0x…" autocomplete="off" />
+          </div>
+        </label>
+        <label class="field">
+          <span class="field-name">代还金额（最多其债务的 50%，代还后拿 5% 奖金的抵押 ETH）</span>
+          <div class="suffix-wrap">
+            <input id="lendLiqIn" type="text" placeholder="0.0" inputmode="decimal" autocomplete="off" />
+            <span class="suffix">LQY</span>
+          </div>
+        </label>
+        <div class="actions">
+          <button id="lendLiqBtn" class="ghost">清算</button>
+        </div>
+        <div class="hint" id="lendHint">超额抵押借贷：存款自动吃利息（股份汇率只涨不跌）；健康系数 &lt; 1 时任何人都能来清算（拿走抵押 ETH + 5% 奖金）。预言机读 LQYSwap 现货价，一笔大额兑换就能操纵它——真实项目用 Chainlink/TWAP。</div>
+        <div class="status" id="lendStatus"></div>
+      </section>
     </main>
 
     <footer class="foot reveal" style="--d:.55s">
@@ -461,9 +559,15 @@ button.copy:hover { background: rgba(139,92,246,.25); border-color: rgba(139,92,
         <code id="stakingAddr"></code>
         <button id="copyStakingBtn" class="copy">复制</button>
       </div>
+      <div class="foot-label">LENDING CONTRACT <span>借贷合约</span></div>
+      <div class="addr-row">
+        <code id="lendingAddr"></code>
+        <button id="copyLendingBtn" class="copy">复制</button>
+      </div>
       <a id="explorerLink" class="ext" href="#" target="_blank" rel="noopener">在 Etherscan 查看合约 ↗</a>
       <a id="fishingExplorerLink" class="ext" href="#" target="_blank" rel="noopener">在 Etherscan 查看钓鱼合约 ↗</a>
       <a id="stakingExplorerLink" class="ext" href="#" target="_blank" rel="noopener">在 Etherscan 查看质押合约 ↗</a>
+      <a id="lendingExplorerLink" class="ext" href="#" target="_blank" rel="noopener">在 Etherscan 查看借贷合约 ↗</a>
     </footer>
   </div>
 
@@ -575,6 +679,53 @@ const LQP_ABI = [
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }] }
 ];
 
+// ⑤ 借贷合约（阶段 5）：部署后回填地址，ABI 只放用到的函数
+const LENDING_ADDRESS = "0x6b4556Cb4243715199C39E33DaaE5A4CF68697D1";
+const LENDING_ABI = [
+  { "type": "function", "name": "supply", "stateMutability": "nonpayable",
+    "inputs": [{ "internalType": "uint256", "name": "amount", "type": "uint256" }], "outputs": [] },
+  { "type": "function", "name": "redeem", "stateMutability": "nonpayable",
+    "inputs": [{ "internalType": "uint256", "name": "amountLqy", "type": "uint256" }], "outputs": [] },
+  { "type": "function", "name": "depositCollateral", "stateMutability": "payable",
+    "inputs": [], "outputs": [] },
+  { "type": "function", "name": "borrow", "stateMutability": "nonpayable",
+    "inputs": [{ "internalType": "uint256", "name": "amount", "type": "uint256" }], "outputs": [] },
+  { "type": "function", "name": "repay", "stateMutability": "nonpayable",
+    "inputs": [{ "internalType": "uint256", "name": "amount", "type": "uint256" }], "outputs": [] },
+  { "type": "function", "name": "withdrawCollateral", "stateMutability": "nonpayable",
+    "inputs": [{ "internalType": "uint256", "name": "amount", "type": "uint256" }], "outputs": [] },
+  { "type": "function", "name": "liquidate", "stateMutability": "nonpayable",
+    "inputs": [{ "internalType": "address", "name": "borrower", "type": "address" },
+               { "internalType": "uint256", "name": "repayAmount", "type": "uint256" }], "outputs": [] },
+  { "type": "function", "name": "totalCash", "stateMutability": "view",
+    "inputs": [], "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }] },
+  { "type": "function", "name": "exchangeRate", "stateMutability": "view",
+    "inputs": [], "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }] },
+  { "type": "function", "name": "utilizationRate", "stateMutability": "view",
+    "inputs": [], "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }] },
+  { "type": "function", "name": "borrowRatePerSecond", "stateMutability": "view",
+    "inputs": [], "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }] },
+  { "type": "function", "name": "supplyRatePerSecond", "stateMutability": "view",
+    "inputs": [], "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }] },
+  { "type": "function", "name": "currentBorrowBalance", "stateMutability": "view",
+    "inputs": [{ "internalType": "address", "name": "user", "type": "address" }],
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }] },
+  { "type": "function", "name": "collateralBalance", "stateMutability": "view",
+    "inputs": [{ "internalType": "address", "name": "user", "type": "address" }],
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }] },
+  { "type": "function", "name": "healthFactor", "stateMutability": "view",
+    "inputs": [{ "internalType": "address", "name": "user", "type": "address" }],
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }] },
+  { "type": "function", "name": "maxBorrowable", "stateMutability": "view",
+    "inputs": [{ "internalType": "address", "name": "user", "type": "address" }],
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }] },
+  { "type": "function", "name": "price", "stateMutability": "view",
+    "inputs": [], "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }] },
+  { "type": "function", "name": "balanceOf", "stateMutability": "view",
+    "inputs": [{ "internalType": "address", "name": "account", "type": "address" }],
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }] }
+];
+
 // ================== 【固定，不用改】以下部分直接复用 ==================
 // 公共 RPC 节点（谁都能用）。绝不要放 Alchemy 带 key 的地址！
 const RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
@@ -589,6 +740,7 @@ let swapRO = new ethers.Contract(SWAP_ADDRESS, SWAP_ABI, provider);
 let lqyRO  = new ethers.Contract(LQY_ADDRESS, LQY_ABI, provider);
 let fishingRO = new ethers.Contract(FISHING_ADDRESS, FISHING_ABI, provider);
 let stakingRO = new ethers.Contract(STAKING_ADDRESS, STAKING_ABI, provider);
+let lendRO = new ethers.Contract(LENDING_ADDRESS, LENDING_ABI, provider);
 let account = null;        // 已连接的钱包地址
 let signer = null;         // 可发交易的 signer
 let swapDir = "eth2tok";   // 当前兑换方向
@@ -600,6 +752,15 @@ let stakeTotal = 0n, stakeRate = 0n, stakePool = 0n; // 质押矿池链上状态
 let myStaked = 0n;   // 我的质押（大整数）
 let myPending = 0;   // 待领奖励（浮点：本地每秒跳动显示，链上每 20 秒校准）
 let myLpBal = 0n;    // 我的 LQP 余额（refreshWallet 同步）
+let myLqyBal = 0n;   // 我的 LQY 余额（refreshWallet 同步，借贷卡片「全部」用）
+// 借贷链上状态（大整数）：现金、利用率、借/存每秒利率、预言机价
+let lendCash = 0n, lendUtil = 0n, lendBorrowRate = 0n, lendSupplyRate = 0n, lendPrice = 0n;
+// 我的借贷仓位：存款价值（wei）、抵押 ETH（wei）、债务（浮点，本地每秒跳动）、健康系数（浮点）
+let myDepositValue = 0n, myCollateral = 0n, myDebt = 0, myHealth = 0, myMaxBorrow = 0n;
+let myDebtWei = 0n; // 债务的链上精确值（wei，refreshLending 同步；「最大取回」估算用）
+// 借贷参数（与部署时一致）：LTV 75% / 清算阈值 80%，供「最大取回」本地估算
+const LEND_LTV = 75n * 10n ** 16n;
+const LEND_THRESHOLD = 80n * 10n ** 16n;
 
 // —— 数字格式化：wei → 可读 ——
 function fmt(wei, decimals = 18, maxFrac = 6) {
@@ -645,6 +806,7 @@ async function refreshPool() {
     updateRemovePreview();
     await refreshFishing();
     await refreshStaking();
+    await refreshLending();
   } catch (e) {
     $("kVal").textContent = "读取失败：" + (e.shortMessage || e.message);
   }
@@ -717,6 +879,7 @@ async function connectWallet(statusEl, beforeText) {
     await refreshWallet();
     await refreshFishing();
     await refreshStaking();
+    await refreshLending();
     return true;
   } catch (e) {
     setStatus(statusEl, "连接钱包失败：" + (e.shortMessage || e.message), "err");
@@ -740,6 +903,7 @@ async function refreshWallet() {
     share.toLocaleString("en-US", { maximumFractionDigits: 4 }) + "%）";
   $("myLpLabel").textContent = fmt(lpBal, 18, 4);
   myLpBal = lpBal; // 质押卡片的「全部」按钮与余额校验用
+  myLqyBal = lqyBal; // 借贷卡片的「全部存入」按钮与余额校验用
 }
 
 // ================== 兑换 ==================
@@ -1017,6 +1181,9 @@ bindCopy($("copyFishingBtn"), FISHING_ADDRESS);
 $("stakingAddr").textContent = STAKING_ADDRESS;
 $("stakingExplorerLink").href = ETHERSCAN + "/address/" + STAKING_ADDRESS;
 bindCopy($("copyStakingBtn"), STAKING_ADDRESS);
+$("lendingAddr").textContent = LENDING_ADDRESS;
+$("lendingExplorerLink").href = ETHERSCAN + "/address/" + LENDING_ADDRESS;
+bindCopy($("copyLendingBtn"), LENDING_ADDRESS);
 
 // ================== 钓鱼挖矿 ==================
 // 玩法状态机：idle → casting → waiting → bite → reeling → settling → idle
@@ -1377,6 +1544,422 @@ $("stakeEmergencyBtn").addEventListener("click", async () => {
     updateStakeBtns();
   }
 });
+
+// ================== 借贷（超额抵押） ==================
+// 记账模型：存款 = 股份（汇率 = (现金+借款−储备) ÷ 总股份，随利息只涨不跌）；
+// 借款 = 债务指数 borrowIndex + 个人快照（惰性计息，谁动作谁结账）。
+// 前端「债务」本地每秒跳动估算，每 20 秒向链上校准一次。
+async function refreshLending() {
+  if (LENDING_ADDRESS === "0x0000000000000000000000000000000000000000") {
+    $("lendHint").textContent = "尚未配置借贷合约地址，部署后把地址回填到 LENDING_ADDRESS。";
+    return;
+  }
+  try {
+    const reads = [lendRO.totalCash(), lendRO.utilizationRate(), lendRO.borrowRatePerSecond(),
+                   lendRO.supplyRatePerSecond(), lendRO.price()];
+    if (account) reads.push(lendRO.balanceOf(account), lendRO.exchangeRate(),
+      lendRO.collateralBalance(account), lendRO.currentBorrowBalance(account),
+      lendRO.healthFactor(account), lendRO.maxBorrowable(account));
+    const r = await Promise.all(reads);
+    lendCash = r[0]; lendUtil = r[1]; lendBorrowRate = r[2]; lendSupplyRate = r[3]; lendPrice = r[4];
+    $("lendCash").innerHTML = fmt(lendCash) + " <small>LQY</small>";
+    $("lendUtil").textContent = (Number(lendUtil) / 1e16).toFixed(2) + "%";
+    $("lendBorrowApr").textContent = toAprPct(lendBorrowRate);
+    $("lendSupplyApr").textContent = toAprPct(lendSupplyRate);
+    if (account) {
+      myDepositValue = r[6] * r[7] / 10n ** 18n; // 存款价值 = 股份 × 汇率
+      myCollateral = r[8];
+      myDebtWei = r[9];
+      myDebt = Number(ethers.formatUnits(myDebtWei, 18)); // 链上为准（覆盖本地跳动估算）
+      myHealth = myDebtWei === 0n ? Infinity : Number(ethers.formatUnits(r[10], 18));
+      myMaxBorrow = r[11];
+      renderLendQuote();
+    } else {
+      myDepositValue = 0n; myCollateral = 0n; myDebt = 0; myDebtWei = 0n;
+      myHealth = 0; myMaxBorrow = 0n;
+      $("lendMyQuote").textContent = "连接钱包后显示";
+      $("lendMyDepositLabel").textContent = "0";
+      $("lendMyCollLabel").textContent = "0";
+      $("lendMyDebtLabel").textContent = "0";
+      $("lendBorrowMaxLabel").textContent = "0";
+    }
+    updateLendBtns();
+  } catch (e) {
+    $("lendHint").textContent = "读取失败：" + (e.shortMessage || e.message);
+  }
+}
+
+// 每秒利率 → 年化百分比（× 31536000 秒）
+function toAprPct(ratePerSecond) {
+  const pct = Number(ratePerSecond) / 1e18 * 31536000 * 100;
+  return pct < 0.01 ? "<0.01%" : pct.toLocaleString("en-US", { maximumFractionDigits: 2 }) + "%";
+}
+
+// 我的仓位（健康系数 < 1.2 标红提醒；债务 = 0 显示 ∞）
+function renderLendQuote() {
+  const q = $("lendMyQuote");
+  let html = "存款 " + fmt(myDepositValue) + " LQY · 抵押 " + fmt(myCollateral, 18, 4) +
+    " ETH · 债务 " + myDebt.toLocaleString("en-US", { maximumFractionDigits: 4 }) + " LQY · ";
+  html += myDebt === 0 ? "健康 ∞"
+    : "健康 <b style='color:" + (myHealth < 1.2 ? "#f87171" : "#34d399") + "'>" +
+      myHealth.toLocaleString("en-US", { maximumFractionDigits: 3 }) + "</b>";
+  q.innerHTML = html;
+  $("lendMyDepositLabel").textContent = fmt(myDepositValue, 18, 4);
+  $("lendMyCollLabel").textContent = fmt(myCollateral, 18, 4);
+  $("lendMyDebtLabel").textContent = myDebt.toLocaleString("en-US", { maximumFractionDigits: 4 });
+  $("lendBorrowMaxLabel").textContent = fmt(myMaxBorrow, 18, 4);
+}
+
+// 按钮启用/禁用矩阵（金额非法、未连接、无存款/无债务/无抵押一律禁用）
+function updateLendBtns() {
+  const sIn = $("lendSupplyIn").value.trim();
+  const rIn = $("lendRedeemIn").value.trim();
+  const cIn = $("lendCollIn").value.trim();
+  const bIn = $("lendBorrowIn").value.trim();
+  const pIn = $("lendRepayIn").value.trim();
+  const coIn = $("lendCollOut").value.trim();
+  const liqAddr = $("lendLiqAddr").value.trim();
+  const liqIn = $("lendLiqIn").value.trim();
+  $("lendSupplyBtn").disabled = !account || !sIn || Number(sIn) <= 0;
+  $("lendRedeemBtn").disabled = !account || !rIn || Number(rIn) <= 0 || myDepositValue === 0n;
+  $("lendCollBtn").disabled = !account || !cIn || Number(cIn) <= 0;
+  $("lendBorrowBtn").disabled = !account || !bIn || Number(bIn) <= 0;
+  $("lendRepayBtn").disabled = !account || !pIn || Number(pIn) <= 0 || myDebt <= 0;
+  $("lendCollOutBtn").disabled = !account || !coIn || Number(coIn) <= 0 || myCollateral === 0n;
+  $("lendLiqBtn").disabled = !account || !liqAddr || !liqIn || Number(liqIn) <= 0;
+}
+["lendSupplyIn", "lendRedeemIn", "lendCollIn", "lendBorrowIn", "lendRepayIn", "lendCollOut",
+ "lendLiqAddr", "lendLiqIn"].forEach((id) => $(id).addEventListener("input", updateLendBtns));
+
+// 输入框填充（wei → 可读，最多 6 位小数）
+function fillLendInput(id, wei) {
+  const s = ethers.formatUnits(wei, 18);
+  $(id).value = s.includes(".") ? parseFloat(s).toFixed(6) : s;
+  updateLendBtns();
+}
+$("lendSupplyMaxBtn").addEventListener("click", () => {
+  if (myLqyBal <= 0n) { setStatus($("lendStatus"), "LQY 余额为 0。", "err"); return; }
+  fillLendInput("lendSupplyIn", myLqyBal);
+});
+$("lendRedeemMaxBtn").addEventListener("click", () => {
+  if (myDepositValue <= 0n) { setStatus($("lendStatus"), "没有存款。", "err"); return; }
+  fillLendInput("lendRedeemIn", myDepositValue);
+});
+$("lendBorrowMaxBtn").addEventListener("click", () => {
+  if (myMaxBorrow <= 10n ** 15n) { setStatus($("lendStatus"), "没有可借额度（先抵押 ETH）。", "err"); return; }
+  // 留 1e15 wei 安全边际：价格与债务每秒在动，卡满会因利息漂移而 revert
+  fillLendInput("lendBorrowIn", myMaxBorrow - 10n ** 15n);
+});
+$("lendCollOutMaxBtn").addEventListener("click", () => {
+  if (myCollateral === 0n) { setStatus($("lendStatus"), "没有已抵押的 ETH。", "err"); return; }
+  let maxOut = myCollateral;
+  if (myDebtWei > 0n) {
+    // 取后仍须健康：剩余抵押 × 价 × LTV ≥ 债务；向下取整 + 留 1e15 wei 安全边际
+    const need = myDebtWei * 10n ** 36n / (lendPrice * LEND_LTV) + 1n;
+    maxOut = myCollateral > need ? myCollateral - need : 0n;
+    if (maxOut > 10n ** 15n) maxOut -= 10n ** 15n;
+  }
+  if (maxOut <= 0n) { setStatus($("lendStatus"), "债务太重，现在取不出抵押（先还债）。", "err"); return; }
+  fillLendInput("lendCollOut", maxOut);
+});
+
+// 授权 LQY 给借贷合约（不足时先补授权；存入/还款/清算用）
+async function ensureLendAllowance(needed, statusEl) {
+  const current = await lqyRO.allowance(account, LENDING_ADDRESS);
+  if (current >= needed) return true;
+  setStatus(statusEl, "授权不足，先在 MetaMask 批准借贷合约使用你的 LQY …");
+  const lqyWrite = new ethers.Contract(LQY_ADDRESS, LQY_ABI, signer);
+  const tx = await lqyWrite.approve(LENDING_ADDRESS, needed);
+  setStatus(statusEl, "授权交易已广播，等待打包… " + txLink(tx.hash));
+  await tx.wait();
+  return true;
+}
+
+// 存入：授权 LQY → supply（五段式，镜像 stakeBtn）
+$("lendSupplyBtn").addEventListener("click", async () => {
+  const statusEl = $("lendStatus");
+  const amount = $("lendSupplyIn").value.trim();
+  if (!amount || Number(amount) <= 0) { setStatus(statusEl, "请输入大于 0 的数量。", "err"); return; }
+  if (!(await connectWallet(statusEl, "正在连接钱包…"))) return;
+  try {
+    const amt = ethers.parseEther(amount);
+    if (amt > myLqyBal) {
+      setStatus(statusEl, "LQY 余额不足（余额 " + fmt(myLqyBal, 18, 4) + " LQY）。", "err");
+      return;
+    }
+    await ensureLendAllowance(amt, statusEl);
+    $("lendSupplyBtn").disabled = true;
+    const lendWrite = new ethers.Contract(LENDING_ADDRESS, LENDING_ABI, signer);
+    setStatus(statusEl, "请在 MetaMask 确认：存入 " + amount + " LQY …");
+    const tx = await lendWrite.supply(amt);
+    setStatus(statusEl, "交易已广播，等待打包上链… " + txLink(tx.hash));
+    await tx.wait();
+    setStatus(statusEl, "存入成功！" + amount + " LQY 换成股份，开始自动吃利息。<br>" + txLink(tx.hash), "ok");
+    $("lendSupplyIn").value = "";
+    await refreshLending();
+    await refreshWallet();
+  } catch (e) {
+    const reason = e.shortMessage || e.message || String(e);
+    if (reason.includes("user rejected") || e.code === 4001) {
+      setStatus(statusEl, "你在 MetaMask 里取消了交易。", "err");
+    } else {
+      setStatus(statusEl, "出错了：" + reason, "err");
+    }
+  } finally {
+    $("lendSupplyBtn").disabled = false;
+    updateLendBtns();
+  }
+});
+
+// 取出：烧股份换 LQY（存款不是抵押品，不查健康）
+$("lendRedeemBtn").addEventListener("click", async () => {
+  const statusEl = $("lendStatus");
+  const amount = $("lendRedeemIn").value.trim();
+  if (!amount || Number(amount) <= 0) { setStatus(statusEl, "请输入大于 0 的数量。", "err"); return; }
+  if (!(await connectWallet(statusEl, "正在连接钱包…"))) return;
+  try {
+    const amt = ethers.parseEther(amount);
+    if (amt > myDepositValue) {
+      setStatus(statusEl, "取出不能超过存款价值（" + fmt(myDepositValue, 18, 4) + " LQY）。", "err");
+      return;
+    }
+    $("lendRedeemBtn").disabled = true;
+    const lendWrite = new ethers.Contract(LENDING_ADDRESS, LENDING_ABI, signer);
+    setStatus(statusEl, "请在 MetaMask 确认：取出 " + amount + " LQY（连本带息）…");
+    const tx = await lendWrite.redeem(amt);
+    setStatus(statusEl, "交易已广播，等待打包上链… " + txLink(tx.hash));
+    await tx.wait();
+    setStatus(statusEl, "取出成功！" + amount + " LQY 已到账。<br>" + txLink(tx.hash), "ok");
+    $("lendRedeemIn").value = "";
+    await refreshLending();
+    await refreshWallet();
+  } catch (e) {
+    const reason = e.shortMessage || e.message || String(e);
+    if (reason.includes("user rejected") || e.code === 4001) {
+      setStatus(statusEl, "你在 MetaMask 里取消了交易。", "err");
+    } else {
+      setStatus(statusEl, "出错了：" + reason, "err");
+    }
+  } finally {
+    $("lendRedeemBtn").disabled = false;
+    updateLendBtns();
+  }
+});
+
+// 抵押：ETH 随交易直接转（原生币不用授权）
+$("lendCollBtn").addEventListener("click", async () => {
+  const statusEl = $("lendStatus");
+  const amount = $("lendCollIn").value.trim();
+  if (!amount || Number(amount) <= 0) { setStatus(statusEl, "请输入大于 0 的数量。", "err"); return; }
+  if (!(await connectWallet(statusEl, "正在连接钱包…"))) return;
+  try {
+    const amt = ethers.parseEther(amount);
+    $("lendCollBtn").disabled = true;
+    const lendWrite = new ethers.Contract(LENDING_ADDRESS, LENDING_ABI, signer);
+    setStatus(statusEl, "请在 MetaMask 确认：抵押 " + amount + " ETH …");
+    const tx = await lendWrite.depositCollateral({ value: amt });
+    setStatus(statusEl, "交易已广播，等待打包上链… " + txLink(tx.hash));
+    await tx.wait();
+    setStatus(statusEl, "抵押成功！" + amount + " ETH 已锁定，可按 75% 价值借 LQY。<br>" + txLink(tx.hash), "ok");
+    $("lendCollIn").value = "";
+    await refreshLending();
+    await refreshWallet();
+  } catch (e) {
+    const reason = e.shortMessage || e.message || String(e);
+    if (reason.includes("user rejected") || e.code === 4001) {
+      setStatus(statusEl, "你在 MetaMask 里取消了交易。", "err");
+    } else {
+      setStatus(statusEl, "出错了：" + reason, "err");
+    }
+  } finally {
+    $("lendCollBtn").disabled = false;
+    updateLendBtns();
+  }
+});
+
+// 借款：从池子里借 LQY（受 LTV 与池内现金双重限制，链上最终裁判）
+$("lendBorrowBtn").addEventListener("click", async () => {
+  const statusEl = $("lendStatus");
+  const amount = $("lendBorrowIn").value.trim();
+  if (!amount || Number(amount) <= 0) { setStatus(statusEl, "请输入大于 0 的数量。", "err"); return; }
+  if (!(await connectWallet(statusEl, "正在连接钱包…"))) return;
+  try {
+    const amt = ethers.parseEther(amount);
+    if (amt > myMaxBorrow) {
+      setStatus(statusEl, "超过当前可借上限（" + fmt(myMaxBorrow, 18, 4) + " LQY，随抵押价值与债务实时变化）。", "err");
+      return;
+    }
+    if (amt > lendCash) { setStatus(statusEl, "池内现金不足（只剩 " + fmt(lendCash, 18, 4) + " LQY）。", "err"); return; }
+    $("lendBorrowBtn").disabled = true;
+    const lendWrite = new ethers.Contract(LENDING_ADDRESS, LENDING_ABI, signer);
+    setStatus(statusEl, "请在 MetaMask 确认：借 " + amount + " LQY …");
+    const tx = await lendWrite.borrow(amt);
+    setStatus(statusEl, "交易已广播，等待打包上链… " + txLink(tx.hash));
+    await tx.wait();
+    setStatus(statusEl, "借款成功！" + amount + " LQY 已到账，债务每秒计息。<br>" + txLink(tx.hash), "ok");
+    $("lendBorrowIn").value = "";
+    await refreshLending();
+    await refreshWallet();
+  } catch (e) {
+    const reason = e.shortMessage || e.message || String(e);
+    if (reason.includes("user rejected") || e.code === 4001) {
+      setStatus(statusEl, "你在 MetaMask 里取消了交易。", "err");
+    } else {
+      setStatus(statusEl, "出错了：" + reason, "err");
+    }
+  } finally {
+    $("lendBorrowBtn").disabled = false;
+    updateLendBtns();
+  }
+});
+
+// 还款：授权 LQY → repay（链上自动封顶在债务额，多输不损失）
+$("lendRepayBtn").addEventListener("click", async () => {
+  const statusEl = $("lendStatus");
+  const amount = $("lendRepayIn").value.trim();
+  if (!amount || Number(amount) <= 0) { setStatus(statusEl, "请输入大于 0 的数量。", "err"); return; }
+  if (!(await connectWallet(statusEl, "正在连接钱包…"))) return;
+  try {
+    const amt = ethers.parseEther(amount);
+    if (myDebt <= 0) { setStatus(statusEl, "没有债务需要还。", "err"); return; }
+    await ensureLendAllowance(amt, statusEl);
+    $("lendRepayBtn").disabled = true;
+    const lendWrite = new ethers.Contract(LENDING_ADDRESS, LENDING_ABI, signer);
+    setStatus(statusEl, "请在 MetaMask 确认：还款 " + amount + " LQY …");
+    const tx = await lendWrite.repay(amt);
+    setStatus(statusEl, "交易已广播，等待打包上链… " + txLink(tx.hash));
+    await tx.wait();
+    setStatus(statusEl, "还款成功！<br>" + txLink(tx.hash), "ok");
+    $("lendRepayIn").value = "";
+    await refreshLending();
+    await refreshWallet();
+  } catch (e) {
+    const reason = e.shortMessage || e.message || String(e);
+    if (reason.includes("user rejected") || e.code === 4001) {
+      setStatus(statusEl, "你在 MetaMask 里取消了交易。", "err");
+    } else {
+      setStatus(statusEl, "出错了：" + reason, "err");
+    }
+  } finally {
+    $("lendRepayBtn").disabled = false;
+    updateLendBtns();
+  }
+});
+
+// 还清：按链上实时债务额授权并一次还清（金额在区块间会漂移，授权略放大一点点）
+$("lendRepayAllBtn").addEventListener("click", async () => {
+  const statusEl = $("lendStatus");
+  if (!(await connectWallet(statusEl, "正在连接钱包…"))) return;
+  try {
+    const debtWei = await lendRO.currentBorrowBalance(account);
+    if (debtWei === 0n) { setStatus(statusEl, "没有债务需要还。", "err"); return; }
+    // repay 会自动封顶：授权比债务略多 1e12 wei，覆盖确认期间的利息漂移
+    await ensureLendAllowance(debtWei + 10n ** 12n, statusEl);
+    $("lendRepayAllBtn").disabled = true;
+    const lendWrite = new ethers.Contract(LENDING_ADDRESS, LENDING_ABI, signer);
+    setStatus(statusEl, "请在 MetaMask 确认：一次还清全部债务（" +
+      Number(ethers.formatUnits(debtWei, 18)).toLocaleString("en-US", { maximumFractionDigits: 6 }) + " LQY）…");
+    const tx = await lendWrite.repay(debtWei);
+    setStatus(statusEl, "交易已广播，等待打包上链… " + txLink(tx.hash));
+    await tx.wait();
+    setStatus(statusEl, "债务已还清！可以取回抵押 ETH 了。<br>" + txLink(tx.hash), "ok");
+    $("lendRepayIn").value = "";
+    await refreshLending();
+    await refreshWallet();
+  } catch (e) {
+    const reason = e.shortMessage || e.message || String(e);
+    if (reason.includes("user rejected") || e.code === 4001) {
+      setStatus(statusEl, "你在 MetaMask 里取消了交易。", "err");
+    } else {
+      setStatus(statusEl, "出错了：" + reason, "err");
+    }
+  } finally {
+    $("lendRepayAllBtn").disabled = false;
+    updateLendBtns();
+  }
+});
+
+// 取回抵押：须保持健康（剩余抵押 × 价 × LTV ≥ 债务），链上最终裁判
+$("lendCollOutBtn").addEventListener("click", async () => {
+  const statusEl = $("lendStatus");
+  const amount = $("lendCollOut").value.trim();
+  if (!amount || Number(amount) <= 0) { setStatus(statusEl, "请输入大于 0 的数量。", "err"); return; }
+  if (!(await connectWallet(statusEl, "正在连接钱包…"))) return;
+  try {
+    const amt = ethers.parseEther(amount);
+    if (amt > myCollateral) {
+      setStatus(statusEl, "不能超过已抵押（" + fmt(myCollateral, 18, 4) + " ETH）。", "err");
+      return;
+    }
+    $("lendCollOutBtn").disabled = true;
+    const lendWrite = new ethers.Contract(LENDING_ADDRESS, LENDING_ABI, signer);
+    setStatus(statusEl, "请在 MetaMask 确认：取回 " + amount + " ETH 抵押 …");
+    const tx = await lendWrite.withdrawCollateral(amt);
+    setStatus(statusEl, "交易已广播，等待打包上链… " + txLink(tx.hash));
+    await tx.wait();
+    setStatus(statusEl, "取回成功！" + amount + " ETH 已到账。<br>" + txLink(tx.hash), "ok");
+    $("lendCollOut").value = "";
+    await refreshLending();
+    await refreshWallet();
+  } catch (e) {
+    const reason = e.shortMessage || e.message || String(e);
+    if (reason.includes("user rejected") || e.code === 4001) {
+      setStatus(statusEl, "你在 MetaMask 里取消了交易。", "err");
+    } else if (reason.includes("unhealthy")) {
+      setStatus(statusEl, "取回后仓位将不健康（债务超过剩余抵押的 75%）。取少一点或先还债。", "err");
+    } else {
+      setStatus(statusEl, "出错了：" + reason, "err");
+    }
+  } finally {
+    $("lendCollOutBtn").disabled = false;
+    updateLendBtns();
+  }
+});
+
+// 清算：代还不健康仓位的债（最多 50%），拿走等值 ×1.05 的抵押 ETH
+$("lendLiqBtn").addEventListener("click", async () => {
+  const statusEl = $("lendStatus");
+  const liqAddr = $("lendLiqAddr").value.trim();
+  const amount = $("lendLiqIn").value.trim();
+  if (!liqAddr || !ethers.isAddress(liqAddr)) { setStatus(statusEl, "请输入合法的借款人地址（0x 开头）。", "err"); return; }
+  if (!amount || Number(amount) <= 0) { setStatus(statusEl, "请输入大于 0 的代还金额。", "err"); return; }
+  if (!(await connectWallet(statusEl, "正在连接钱包…"))) return;
+  try {
+    const amt = ethers.parseEther(amount);
+    await ensureLendAllowance(amt, statusEl);
+    $("lendLiqBtn").disabled = true;
+    const lendWrite = new ethers.Contract(LENDING_ADDRESS, LENDING_ABI, signer);
+    setStatus(statusEl, "请在 MetaMask 确认：代还 " + amount + " LQY 并清算该仓位 …");
+    const tx = await lendWrite.liquidate(liqAddr, amt);
+    setStatus(statusEl, "交易已广播，等待打包上链… " + txLink(tx.hash));
+    await tx.wait();
+    setStatus(statusEl, "清算成功！抵押 ETH（含 5% 奖金）已到账。<br>" + txLink(tx.hash), "ok");
+    $("lendLiqIn").value = "";
+    await refreshLending();
+    await refreshWallet();
+  } catch (e) {
+    const reason = e.shortMessage || e.message || String(e);
+    if (reason.includes("user rejected") || e.code === 4001) {
+      setStatus(statusEl, "你在 MetaMask 里取消了交易。", "err");
+    } else if (reason.includes("not liquidatable")) {
+      setStatus(statusEl, "该仓位仍是健康的（债务没超过抵押价值 × 80%），不能清算。", "err");
+    } else {
+      setStatus(statusEl, "出错了：" + reason, "err");
+    }
+  } finally {
+    $("lendLiqBtn").disabled = false;
+    updateLendBtns();
+  }
+});
+
+// 债务本地跳动：每秒 += 债务 × 借款每秒利率（纯显示；链上每 20 秒校准为准）
+setInterval(() => {
+  if (!account || myDebt <= 0 || lendBorrowRate === 0n) return;
+  myDebt += myDebt * (Number(lendBorrowRate) / 1e18);
+  renderLendQuote();
+  updateLendBtns();
+}, 1000);
+setInterval(() => { if (account) refreshLending(); }, 20000);
 
 // 待领奖励本地跳动：每秒 += 每秒奖励 × 我的份额（纯显示；池子发干后停止跳动，链上校准为准）
 setInterval(() => {

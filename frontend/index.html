@@ -398,6 +398,46 @@ button.copy:hover { background: rgba(139,92,246,.25); border-color: rgba(139,92,
         </div>
         <div class="status" id="fishStatus"></div>
       </section>
+
+      <!-- 质押挖矿 -->
+      <section class="card reveal" style="--d:.6s">
+        <div class="card-label">Staking <span>质押挖矿</span></div>
+        <div class="stat-grid">
+          <div class="stat"><div class="k">总质押 TOTAL</div><div class="v" id="stakeTotal">…</div></div>
+          <div class="stat"><div class="k">每秒奖励 RATE</div><div class="v" id="stakeRate">…</div></div>
+          <div class="stat"><div class="k">我的质押 MY STAKE</div><div class="v" id="myStaked">…</div></div>
+          <div class="stat"><div class="k">待领奖励 PENDING</div><div class="v" id="myPending">…</div></div>
+        </div>
+        <div class="quote">
+          <span class="q-label">矿池</span>
+          <span class="q-value" id="stakePoolQuote">—</span>
+        </div>
+        <label class="field">
+          <span class="field-name">质押数量（我的 LQP 余额）</span>
+          <div class="suffix-wrap">
+            <input id="stakeIn" type="text" placeholder="0.0" inputmode="decimal" autocomplete="off" />
+            <span class="suffix">LQP</span>
+          </div>
+        </label>
+        <div class="actions">
+          <button id="stakeBtn" class="btn-main">质押</button>
+          <button id="maxStakeBtn" class="ghost">全部</button>
+        </div>
+        <label class="field">
+          <span class="field-name">取出数量（已质押 <span id="myStakedLabel">0</span>）</span>
+          <div class="suffix-wrap">
+            <input id="stakeOut" type="text" placeholder="0.0" inputmode="decimal" autocomplete="off" />
+            <span class="suffix">LQP</span>
+          </div>
+        </label>
+        <div class="actions">
+          <button id="stakeWithdrawBtn" class="btn-main">取出</button>
+          <button id="stakeHarvestBtn" class="ghost">收获</button>
+          <button id="stakeEmergencyBtn" class="ghost">紧急取出</button>
+        </div>
+        <div class="hint" id="stakeHint">质押 LQP 不影响池子运作（手续费照赚）。奖励按「你的份额 ÷ 总份额」每秒记账，只有动作时才一次性结清（惰性结算省 gas）。</div>
+        <div class="status" id="stakeStatus"></div>
+      </section>
     </main>
 
     <footer class="foot reveal" style="--d:.55s">
@@ -416,8 +456,14 @@ button.copy:hover { background: rgba(139,92,246,.25); border-color: rgba(139,92,
         <code id="fishingAddr"></code>
         <button id="copyFishingBtn" class="copy">复制</button>
       </div>
+      <div class="foot-label">STAKING CONTRACT <span>质押合约</span></div>
+      <div class="addr-row">
+        <code id="stakingAddr"></code>
+        <button id="copyStakingBtn" class="copy">复制</button>
+      </div>
       <a id="explorerLink" class="ext" href="#" target="_blank" rel="noopener">在 Etherscan 查看合约 ↗</a>
       <a id="fishingExplorerLink" class="ext" href="#" target="_blank" rel="noopener">在 Etherscan 查看钓鱼合约 ↗</a>
+      <a id="stakingExplorerLink" class="ext" href="#" target="_blank" rel="noopener">在 Etherscan 查看质押合约 ↗</a>
     </footer>
   </div>
 
@@ -494,6 +540,41 @@ const FISHING_ABI = [
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }] }
 ];
 
+// ④ 质押合约（阶段 4）：部署后回填地址，ABI 只放用到的函数
+const STAKING_ADDRESS = "0x7b8E264392D173805E5bcD12B12c5a0b1FD44394";
+const STAKING_ABI = [
+  { "type": "function", "name": "stake", "stateMutability": "nonpayable",
+    "inputs": [{ "internalType": "uint256", "name": "amount", "type": "uint256" }], "outputs": [] },
+  { "type": "function", "name": "withdraw", "stateMutability": "nonpayable",
+    "inputs": [{ "internalType": "uint256", "name": "amount", "type": "uint256" }], "outputs": [] },
+  { "type": "function", "name": "harvest", "stateMutability": "nonpayable", "inputs": [], "outputs": [] },
+  { "type": "function", "name": "emergencyWithdraw", "stateMutability": "nonpayable", "inputs": [], "outputs": [] },
+  { "type": "function", "name": "pendingReward", "stateMutability": "view",
+    "inputs": [{ "internalType": "address", "name": "user", "type": "address" }],
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }] },
+  { "type": "function", "name": "rewardPerSecond", "stateMutability": "view",
+    "inputs": [], "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }] },
+  { "type": "function", "name": "totalStaked", "stateMutability": "view",
+    "inputs": [], "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }] },
+  { "type": "function", "name": "userInfo", "stateMutability": "view",
+    "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "outputs": [{ "internalType": "uint256", "name": "amount", "type": "uint256" },
+               { "internalType": "uint256", "name": "rewardDebt", "type": "uint256" }] },
+  { "type": "function", "name": "rewardsBalance", "stateMutability": "view",
+    "inputs": [], "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }] }
+];
+// 质押前授权 LQP 用（LQP = LQYSwap 本身，approve/allowance 是标准 ERC20 函数）
+const LQP_ABI = [
+  { "type": "function", "name": "approve", "stateMutability": "nonpayable",
+    "inputs": [{ "internalType": "address", "name": "spender", "type": "address" },
+               { "internalType": "uint256", "name": "value", "type": "uint256" }],
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }] },
+  { "type": "function", "name": "allowance", "stateMutability": "view",
+    "inputs": [{ "internalType": "address", "name": "owner", "type": "address" },
+               { "internalType": "address", "name": "spender", "type": "address" }],
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }] }
+];
+
 // ================== 【固定，不用改】以下部分直接复用 ==================
 // 公共 RPC 节点（谁都能用）。绝不要放 Alchemy 带 key 的地址！
 const RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
@@ -507,6 +588,7 @@ let provider = new ethers.JsonRpcProvider(RPC_URL);
 let swapRO = new ethers.Contract(SWAP_ADDRESS, SWAP_ABI, provider);
 let lqyRO  = new ethers.Contract(LQY_ADDRESS, LQY_ABI, provider);
 let fishingRO = new ethers.Contract(FISHING_ADDRESS, FISHING_ABI, provider);
+let stakingRO = new ethers.Contract(STAKING_ADDRESS, STAKING_ABI, provider);
 let account = null;        // 已连接的钱包地址
 let signer = null;         // 可发交易的 signer
 let swapDir = "eth2tok";   // 当前兑换方向
@@ -514,6 +596,10 @@ let liqTab = "add";        // 流动性当前标签页
 let rEth = 0n, rTok = 0n;  // 池子储备（大整数）
 let fishPond = 0n, fishReward = 0n, fishCooldown = 0n; // 钓鱼链上状态（大整数）
 let fishCooldownLeft = 0;  // 剩余冷却秒数（本地显示用，链上每 20 秒校准）
+let stakeTotal = 0n, stakeRate = 0n, stakePool = 0n; // 质押矿池链上状态（大整数）
+let myStaked = 0n;   // 我的质押（大整数）
+let myPending = 0;   // 待领奖励（浮点：本地每秒跳动显示，链上每 20 秒校准）
+let myLpBal = 0n;    // 我的 LQP 余额（refreshWallet 同步）
 
 // —— 数字格式化：wei → 可读 ——
 function fmt(wei, decimals = 18, maxFrac = 6) {
@@ -558,6 +644,7 @@ async function refreshPool() {
     updateLiqHint();
     updateRemovePreview();
     await refreshFishing();
+    await refreshStaking();
   } catch (e) {
     $("kVal").textContent = "读取失败：" + (e.shortMessage || e.message);
   }
@@ -629,6 +716,7 @@ async function connectWallet(statusEl, beforeText) {
     account = await signer.getAddress();
     await refreshWallet();
     await refreshFishing();
+    await refreshStaking();
     return true;
   } catch (e) {
     setStatus(statusEl, "连接钱包失败：" + (e.shortMessage || e.message), "err");
@@ -651,6 +739,7 @@ async function refreshWallet() {
     "LP 份额: " + fmt(lpBal, 18, 4) + " LQP（占池子 " +
     share.toLocaleString("en-US", { maximumFractionDigits: 4 }) + "%）";
   $("myLpLabel").textContent = fmt(lpBal, 18, 4);
+  myLpBal = lpBal; // 质押卡片的「全部」按钮与余额校验用
 }
 
 // ================== 兑换 ==================
@@ -925,6 +1014,9 @@ bindCopy($("copyLqyBtn"), LQY_ADDRESS);
 $("fishingAddr").textContent = FISHING_ADDRESS;
 $("fishingExplorerLink").href = ETHERSCAN + "/address/" + FISHING_ADDRESS;
 bindCopy($("copyFishingBtn"), FISHING_ADDRESS);
+$("stakingAddr").textContent = STAKING_ADDRESS;
+$("stakingExplorerLink").href = ETHERSCAN + "/address/" + STAKING_ADDRESS;
+bindCopy($("copyStakingBtn"), STAKING_ADDRESS);
 
 // ================== 钓鱼挖矿 ==================
 // 玩法状态机：idle → casting → waiting → bite → reeling → settling → idle
@@ -1082,6 +1174,218 @@ setInterval(() => {
   if (fishCooldownLeft === 0) refreshFishing();
 }, 1000);
 setInterval(() => { if (account) refreshFishing(); }, 20000);
+
+// ================== 质押挖矿 ==================
+// 份额记账：待领 = 我的质押 × 每股累计收益 − 已结算水位。
+// 链上只在动作时结账（惰性结算），前端「待领」用本地估算秒级跳动，
+// 每 20 秒向链上校准一次（pendingReward 是 view，读的是上次结账后的账）。
+async function refreshStaking() {
+  if (STAKING_ADDRESS === "0x0000000000000000000000000000000000000000") {
+    $("stakeHint").textContent = "尚未配置质押合约地址，部署后把地址回填到 STAKING_ADDRESS。";
+    return;
+  }
+  try {
+    const reads = [stakingRO.totalStaked(), stakingRO.rewardPerSecond(), stakingRO.rewardsBalance()];
+    if (account) reads.push(stakingRO.userInfo(account), stakingRO.pendingReward(account));
+    const r = await Promise.all(reads);
+    stakeTotal = r[0]; stakeRate = r[1]; stakePool = r[2];
+    $("stakeTotal").innerHTML = fmt(stakeTotal) + " <small>LQP</small>";
+    $("stakeRate").innerHTML = fmt(stakeRate, 18, 4) + " <small>LQY / 秒</small>";
+    if (stakeRate > 0n) {
+      const runway = Number(stakePool) / Number(stakeRate) / 86400;
+      let q = "池余额 " + fmt(stakePool, 18, 2) + " LQY · 每天共发 " +
+        fmt(stakeRate * 86400n, 18, 0) + " LQY · 可持续约 " + runway.toFixed(1) + " 天";
+      if (account && myStaked > 0n && stakeTotal > 0n) {
+        const myDaily = Number(stakeRate) / 1e18 * 86400 * Number(myStaked) / Number(stakeTotal);
+        q += " · 我的日收益 " + myDaily.toFixed(3) + " LQY";
+      }
+      $("stakePoolQuote").textContent = q;
+    } else {
+      $("stakePoolQuote").textContent = "挖矿暂停中（速率 0），等老板恢复。";
+    }
+    if (account) {
+      const info = r[3]; // [amount, rewardDebt]
+      myStaked = info[0];
+      myPending = Number(ethers.formatUnits(r[4], 18)); // 以链上为准（覆盖本地跳动估算）
+      $("myStaked").innerHTML = fmt(myStaked) + " <small>LQP</small>";
+      $("myStakedLabel").textContent = fmt(myStaked, 18, 4);
+      $("myPending").innerHTML = myPending.toLocaleString("en-US", { maximumFractionDigits: 4 }) + " <small>LQY</small>";
+    } else {
+      myStaked = 0n;
+      $("myStaked").innerHTML = "— <small>未连接</small>";
+      $("myStakedLabel").textContent = "0";
+      $("myPending").textContent = "—";
+    }
+    updateStakeBtns();
+  } catch (e) {
+    $("stakeHint").textContent = "读取失败：" + (e.shortMessage || e.message);
+  }
+}
+
+// 按钮启用/禁用矩阵（金额非法、未连接、无待领等一律禁用）
+function updateStakeBtns() {
+  const stIn = $("stakeIn").value.trim();
+  const wdIn = $("stakeOut").value.trim();
+  $("stakeBtn").disabled = !account || !stIn || Number(stIn) <= 0;
+  $("stakeWithdrawBtn").disabled = !account || !wdIn || Number(wdIn) <= 0;
+  $("stakeHarvestBtn").disabled = !account || myPending <= 0;
+  $("stakeEmergencyBtn").disabled = !account || myStaked === 0n;
+}
+$("stakeIn").addEventListener("input", updateStakeBtns);
+$("stakeOut").addEventListener("input", updateStakeBtns);
+$("maxStakeBtn").addEventListener("click", () => {
+  if (myLpBal <= 0n) { setStatus($("stakeStatus"), "没有可质押的 LQP。", "err"); return; }
+  const s = ethers.formatUnits(myLpBal, 18);
+  $("stakeIn").value = s.includes(".") ? parseFloat(s).toFixed(6) : s;
+  updateStakeBtns();
+});
+
+// 质押：授权 LQP → 质押（五段式，镜像 swapBtn）
+$("stakeBtn").addEventListener("click", async () => {
+  const statusEl = $("stakeStatus");
+  const amount = $("stakeIn").value.trim();
+  if (!amount || Number(amount) <= 0) { setStatus(statusEl, "请输入大于 0 的数量。", "err"); return; }
+  if (!(await connectWallet(statusEl, "正在连接钱包…"))) return;
+  try {
+    const amt = ethers.parseEther(amount);
+    if (amt > myLpBal) {
+      setStatus(statusEl, "LQP 余额不足（余额 " + fmt(myLpBal, 18, 4) + " LQP）。", "err");
+      return;
+    }
+    // 授权 LQP 给质押合约（不足时先补授权）
+    const lqpRO2 = new ethers.Contract(SWAP_ADDRESS, LQP_ABI, provider);
+    if ((await lqpRO2.allowance(account, STAKING_ADDRESS)) < amt) {
+      setStatus(statusEl, "授权不足，先在 MetaMask 批准质押合约使用你的 LQP …");
+      const lqpWrite = new ethers.Contract(SWAP_ADDRESS, LQP_ABI, signer);
+      const tx = await lqpWrite.approve(STAKING_ADDRESS, amt);
+      setStatus(statusEl, "授权交易已广播，等待打包… " + txLink(tx.hash));
+      await tx.wait();
+    }
+    $("stakeBtn").disabled = true;
+    const stakingWrite = new ethers.Contract(STAKING_ADDRESS, STAKING_ABI, signer);
+    setStatus(statusEl, "请在 MetaMask 确认：质押 " + amount + " LQP …");
+    const tx = await stakingWrite.stake(amt);
+    setStatus(statusEl, "交易已广播，等待打包上链… " + txLink(tx.hash));
+    await tx.wait();
+    setStatus(statusEl, "质押成功！" + amount + " LQP 开始每秒产生利息。<br>" + txLink(tx.hash), "ok");
+    $("stakeIn").value = "";
+    await refreshStaking();
+    await refreshWallet();
+  } catch (e) {
+    const reason = e.shortMessage || e.message || String(e);
+    if (reason.includes("user rejected") || e.code === 4001) {
+      setStatus(statusEl, "你在 MetaMask 里取消了交易。", "err");
+    } else {
+      setStatus(statusEl, "出错了：" + reason, "err");
+    }
+  } finally {
+    $("stakeBtn").disabled = false;
+    updateStakeBtns();
+  }
+});
+
+// 取出：本金 + 待领奖励一起结算
+$("stakeWithdrawBtn").addEventListener("click", async () => {
+  const statusEl = $("stakeStatus");
+  const amount = $("stakeOut").value.trim();
+  if (!amount || Number(amount) <= 0) { setStatus(statusEl, "请输入大于 0 的数量。", "err"); return; }
+  if (!(await connectWallet(statusEl, "正在连接钱包…"))) return;
+  try {
+    const amt = ethers.parseEther(amount);
+    if (amt > myStaked) {
+      setStatus(statusEl, "取出不能超过已质押（" + fmt(myStaked, 18, 4) + " LQP）。", "err");
+      return;
+    }
+    $("stakeWithdrawBtn").disabled = true;
+    const stakingWrite = new ethers.Contract(STAKING_ADDRESS, STAKING_ABI, signer);
+    setStatus(statusEl, "请在 MetaMask 确认：取出 " + amount + " LQP（待领奖励一起结算）…");
+    const tx = await stakingWrite.withdraw(amt);
+    setStatus(statusEl, "交易已广播，等待打包上链… " + txLink(tx.hash));
+    await tx.wait();
+    setStatus(statusEl, "取出成功！本金与待领奖励已到账。<br>" + txLink(tx.hash), "ok");
+    $("stakeOut").value = "";
+    await refreshStaking();
+    await refreshWallet();
+  } catch (e) {
+    const reason = e.shortMessage || e.message || String(e);
+    if (reason.includes("user rejected") || e.code === 4001) {
+      setStatus(statusEl, "你在 MetaMask 里取消了交易。", "err");
+    } else {
+      setStatus(statusEl, "出错了：" + reason, "err");
+    }
+  } finally {
+    $("stakeWithdrawBtn").disabled = false;
+    updateStakeBtns();
+  }
+});
+
+// 收获：只领待领奖励，本金不动
+$("stakeHarvestBtn").addEventListener("click", async () => {
+  const statusEl = $("stakeStatus");
+  if (!(await connectWallet(statusEl, "正在连接钱包…"))) return;
+  if (myPending <= 0) { setStatus(statusEl, "暂时没有待领奖励。", "err"); return; }
+  try {
+    $("stakeHarvestBtn").disabled = true;
+    const stakingWrite = new ethers.Contract(STAKING_ADDRESS, STAKING_ABI, signer);
+    setStatus(statusEl, "请在 MetaMask 确认收获 " + myPending.toLocaleString("en-US", { maximumFractionDigits: 4 }) + " LQY …");
+    const tx = await stakingWrite.harvest();
+    setStatus(statusEl, "交易已广播，等待打包上链… " + txLink(tx.hash));
+    await tx.wait();
+    setStatus(statusEl, "收获成功！LQY 已到账。<br>" + txLink(tx.hash), "ok");
+    await refreshStaking();
+    await refreshWallet();
+  } catch (e) {
+    const reason = e.shortMessage || e.message || String(e);
+    if (reason.includes("user rejected") || e.code === 4001) {
+      setStatus(statusEl, "你在 MetaMask 里取消了交易。", "err");
+    } else {
+      setStatus(statusEl, "出错了：" + reason, "err");
+    }
+  } finally {
+    $("stakeHarvestBtn").disabled = false;
+    updateStakeBtns();
+  }
+});
+
+// 紧急取出（逃生舱）：放弃待领奖励、立即取回全部本金——需二次确认
+$("stakeEmergencyBtn").addEventListener("click", async () => {
+  const statusEl = $("stakeStatus");
+  if (!(await connectWallet(statusEl, "正在连接钱包…"))) return;
+  if (myStaked === 0n) { setStatus(statusEl, "没有已质押的本金。", "err"); return; }
+  if (!confirm("紧急取出会放弃全部待领奖励（约 " +
+    myPending.toLocaleString("en-US", { maximumFractionDigits: 4 }) +
+    " LQY），立即取回本金 " + fmt(myStaked, 18, 4) + " LQP。确定吗？")) return;
+  try {
+    $("stakeEmergencyBtn").disabled = true;
+    const stakingWrite = new ethers.Contract(STAKING_ADDRESS, STAKING_ABI, signer);
+    setStatus(statusEl, "请在 MetaMask 确认紧急取出 …");
+    const tx = await stakingWrite.emergencyWithdraw();
+    setStatus(statusEl, "交易已广播，等待打包上链… " + txLink(tx.hash));
+    await tx.wait();
+    setStatus(statusEl, "已紧急取出本金；待领奖励已放弃（留在池中）。<br>" + txLink(tx.hash), "ok");
+    await refreshStaking();
+    await refreshWallet();
+  } catch (e) {
+    const reason = e.shortMessage || e.message || String(e);
+    if (reason.includes("user rejected") || e.code === 4001) {
+      setStatus(statusEl, "你在 MetaMask 里取消了交易。", "err");
+    } else {
+      setStatus(statusEl, "出错了：" + reason, "err");
+    }
+  } finally {
+    $("stakeEmergencyBtn").disabled = false;
+    updateStakeBtns();
+  }
+});
+
+// 待领奖励本地跳动：每秒 += 每秒奖励 × 我的份额（纯显示；池子发干后停止跳动，链上校准为准）
+setInterval(() => {
+  if (!account || myStaked === 0n || stakeTotal === 0n) return;
+  if (stakeRate === 0n || stakePool <= stakeRate) return;
+  myPending += (Number(stakeRate) / 1e18) * (Number(myStaked) / Number(stakeTotal));
+  $("myPending").innerHTML = myPending.toLocaleString("en-US", { maximumFractionDigits: 4 }) + " <small>LQY</small>";
+}, 1000);
+setInterval(() => { if (account) refreshStaking(); }, 20000);
 
 // ================== 动态图画 ==================
 // ① 星空粒子网络：游动的光点 + 近距离连线（区块链网络的隐喻）
